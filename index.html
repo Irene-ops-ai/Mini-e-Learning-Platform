@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini E-Learning Platform</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f9;
+      color: #333;
+    }
+    header {
+      background: #2d89ef;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+    }
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: 20px auto;
+    }
+    h1, h2 {
+      margin-bottom: 10px;
+    }
+    .course-list, .lesson-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    button {
+      background: #2d89ef;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      margin-top: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #1b5fa7;
+    }
+    .progress {
+      margin-top: 10px;
+      background: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 8px;
+      width: 0;
+      background: #2d89ef;
+      transition: width 0.3s;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .completed {
+      background: #4caf50 !important;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mini E-Learning Platform</h1>
+</header>
+
+<div class="container" id="app"></div>
+
+<script>
+  // Course data
+  const courses = [
+    {
+      id: 1,
+      title: "HTML Basics",
+      description: "Learn the structure of web pages with HTML.",
+      lessons: ["Introduction to HTML", "Tags & Elements", "Forms & Inputs"]
+    },
+    {
+      id: 2,
+      title: "CSS Fundamentals",
+      description: "Style and design your web pages with CSS.",
+      lessons: ["Selectors & Properties", "Flexbox & Grid", "Responsive Design"]
+    },
+    {
+      id: 3,
+      title: "JavaScript Essentials",
+      description: "Add interactivity with JavaScript.",
+      lessons: ["Variables & Data Types", "Functions & Loops", "DOM Manipulation"]
+    }
+  ];
+
+  const app = document.getElementById("app");
+
+  // Load progress from localStorage
+  let progress = JSON.parse(localStorage.getItem("progress")) || {};
+
+  function saveProgress() {
+    localStorage.setItem("progress", JSON.stringify(progress));
+  }
+
+  // Render home page
+  function renderHome() {
+    app.innerHTML = "<h2>Available Courses</h2><div class='course-list'></div>";
+    const list = app.querySelector(".course-list");
+
+    courses.forEach(course => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const courseProgress = progress[course.id] || [];
+      const completed = courseProgress.filter(c => c).length;
+      const total = course.lessons.length;
+      const percent = (completed / total) * 100;
+
+      card.innerHTML = `
+        <h3>${course.title}</h3>
+        <p>${course.description}</p>
+        <div class="progress">
+          <div class="progress-bar" style="width:${percent}%"></div>
+        </div>
+        <p>${completed} / ${total} lessons completed</p>
+        <button onclick="renderCourse(${course.id})">View Course</button>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  // Render course detail page
+  function renderCourse(id) {
+    const course = courses.find(c => c.id === id);
+    const courseProgress = progress[id] || new Array(course.lessons.length).fill(false);
+    progress[id] = courseProgress;
+
+    app.innerHTML = `
+      <button class="back-btn" onclick="renderHome()">← Back to Courses</button>
+      <h2>${course.title}</h2>
+      <p>${course.description}</p>
+      <div class="lesson-list"></div>
+    `;
+
+    const list = app.querySelector(".lesson-list");
+
+    course.lessons.forEach((lesson, index) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const completed = courseProgress[index];
+
+      card.innerHTML = `
+        <h4>${lesson}</h4>
+        <button class="${completed ? 'completed' : ''}" onclick="markLesson(${id}, ${index})">
+          ${completed ? 'Completed' : 'Mark as Completed'}
+        </button>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  // Mark lesson as completed
+  function markLesson(courseId, lessonIndex) {
+    progress[courseId][lessonIndex] = true;
+    saveProgress();
+    renderCourse(courseId);
+  }
+
+  // Initialize app
+  renderHome();
+</script>
+
+</body>
+</html>
